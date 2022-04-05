@@ -4,7 +4,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 import pytorch_lightning as pl
 from data.data import NERDataset
-from model.model import NERLongformerQA
+from model.model import NERLongformer
 from torch.utils.data import DataLoader
 import os
 import ast
@@ -49,10 +49,6 @@ def get_dataloader(split_name, cfg) -> DataLoader:
     )
     dataset_path = clearml_data_object.get_local_copy()
 
-    # dataset_split = read_json_multiple_templates(
-    #     os.path.join(dataset_path, "{}.json".format(split_name))
-    # )
-
     dataset_split = read_json(os.path.join(
         dataset_path, "{}.json".format(split_name)))
 
@@ -65,7 +61,7 @@ def get_dataloader(split_name, cfg) -> DataLoader:
     if split_name in ["dev", "test"]:
         return DataLoader(
             dataset,
-            batch_size=cfg.template_size,
+            batch_size=cfg.batch_size,
             num_workers=cfg.num_workers,
             collate_fn=NERDataset.collate_fn,
             # shuffle=True,
@@ -73,14 +69,14 @@ def get_dataloader(split_name, cfg) -> DataLoader:
     else:
         return DataLoader(
             dataset,
-            batch_size=cfg.template_size,
+            batch_size=cfg.batch_size,
             num_workers=cfg.num_workers,
             collate_fn=NERDataset.collate_fn,
             # shuffle=True,
         )
 
 
-def train(cfg, task) -> NERLongformerQA:
+def train(cfg, task) -> NERLongformer:
     callbacks = []
 
     if cfg.checkpointing:
@@ -104,13 +100,12 @@ def train(cfg, task) -> NERLongformerQA:
     train_loader = get_dataloader("train", cfg)
     val_loader = get_dataloader("dev", cfg)
 
-    model = NERLongformerQA(cfg, task)
+    model = NERLongformer(cfg, task)
     trainer = pl.Trainer(
         gpus=cfg.gpu,
         max_epochs=cfg.num_epochs,
         accumulate_grad_batches=cfg.grad_accum,
         callbacks=callbacks,
-        deterministic=True,
     )
     trainer.fit(model, train_loader, val_loader)
     return model
@@ -119,7 +114,7 @@ def train(cfg, task) -> NERLongformerQA:
 def test(cfg, model) -> List:
     test_loader = get_dataloader("test", cfg)
     trainer = pl.Trainer(
-        gpus=cfg.gpu, max_epochs=cfg.num_epochs, deterministic=True)
+        gpus=cfg.gpu, max_epochs=cfg.num_epochs)
     results = trainer.test(model, test_loader)
     return results
 
@@ -136,19 +131,18 @@ def hydra_main(cfg) -> float:
         if cfg.model_name == "mrm8488/longformer-base-4096-finetuned-squadv2"
         else tags + ["longformer-base"]
     )
-    tags = tags + ["w_prompt_qns"] if cfg.add_prompt_qns else tags
 
     if cfg.train:
         task = Task.init(
             project_name="LongQA",
-            task_name="ConversationalQA-NER-train",
+            task_name="NER",
             output_uri="s3://experiment-logging/storage/",
             tags=tags,
         )
     else:
         task = Task.init(
             project_name="LongQA",
-            task_name="ConversationalQA-NER-predict",
+            task_name="NER-predict",
             output_uri="s3://experiment-logging/storage/",
             tags=tags,
         )
@@ -169,7 +163,7 @@ def hydra_main(cfg) -> float:
         if cfg.trained_model_path:
             trained_model_path = StorageManager.get_local_copy(
                 cfg.trained_model_path)
-            model = NERLongformerQA.load_from_checkpoint(
+            model = NERLongformer.load_from_checkpoint(
                 trained_model_path, cfg=cfg, task=task
             )
 

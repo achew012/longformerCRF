@@ -1,0 +1,4 @@
+.mypy_cache
+src/__pycache__/
+outputs/
+__pycache__/

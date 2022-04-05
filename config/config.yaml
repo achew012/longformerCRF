@@ -1,21 +1,19 @@
 seed: 1234
-lr: 1e-05
+lr: 1e-04
 dropout: 0.2
 warmup: 1000
 num_workers: 4
 every_n_epochs: 5
 max_prediction_span: 25
-max_output_len: 128
 max_input_len: 1024
-batch_size: 16
+batch_size: 8
 eval_batch_size: 8
-template_size: 6
 grad_accum: 4
 grad_ckpt: True
 fp16: False
 attention_window: 512
 num_epochs: 20
-model_name: allenai/longformer-base-4096 #mrm8488/longformer-base-4096-finetuned-squadv2
+model_name: allenai/longformer-base-4096
 data_dir: /data
 output_dir: /saved_models/
 clearml_dataset_project_name: datasets/muc4
@@ -31,12 +29,18 @@ early_stopping: True
 checkpointing: True
 trained_model_path: 
 queue: compute
-add_prompt_qns: False
 role_map: {
-    'Location': "where did the event happen?",
-    'PerpInd': "who attacked the victim?",
-    'PerpOrg': "what organization did the attacker belong to?",
-    'PhysicalTarget': "what is the target of the event?",
-    'HumTarget': "who is the victim of the event?",
-    'Weapon': 'what was used to attack the victim?',
+    'O': 0,
+    'B-Location': 1,
+    'I-Location': 2,
+    'B-PerpInd': 3,
+    'I-PerpInd': 4,
+    'B-PerpOrg': 5,
+    'I-PerpOrg': 6,
+    'B-PhysicalTarget': 7,
+    'I-PhysicalTarget': 8,
+    'B-HumTarget': 9,
+    'I-HumTarget': 10,
+    'B-Weapon': 11,
+    'I-Weapon': 12,
 }

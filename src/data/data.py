@@ -12,7 +12,8 @@ class NERDataset(Dataset):
         self.tokenizer = tokenizer
         if "templates" in dataset[0].keys():
             self.train = True
-            self.processed_dataset = process_train_data(dataset, self.tokenizer, cfg)
+            self.processed_dataset = process_train_data(
+                dataset, self.tokenizer, cfg)
         else:
             self.train = False
             self.processed_dataset = process_inference_data(
@@ -29,12 +30,10 @@ class NERDataset(Dataset):
         item = {}
         item["input_ids"] = self.processed_dataset[idx]["input_ids"]
         item["attention_mask"] = self.processed_dataset[idx]["attention_mask"]
-        item["context_mask"] = self.processed_dataset[idx]["context_mask"]
         item["docid"] = self.processed_dataset[idx]["docid"]
         if self.train:
-            item["gold_mentions"] = self.processed_dataset[idx]["gold_mentions"]
-            item["start"] = torch.tensor(self.processed_dataset[idx]["start"])
-            item["end"] = torch.tensor(self.processed_dataset[idx]["end"])
+            item["labels"] = torch.tensor(
+                self.processed_dataset[idx]["labels"])
         return item
 
     @staticmethod
@@ -44,41 +43,14 @@ class NERDataset(Dataset):
         The collate function is called by PyTorch DataLoader
         """
 
-        docids = [ex["docid"] for ex in batch]
+        # docids = [ex["docid"] for ex in batch]
         input_ids = torch.stack([ex["input_ids"] for ex in batch])
         attention_mask = torch.stack([ex["attention_mask"] for ex in batch])
-        context_mask = torch.stack([ex["context_mask"] for ex in batch])
-        gold_mentions = [ex["gold_mentions"] for ex in batch]
-        start = torch.stack([ex["start"] for ex in batch])
-        end = torch.stack([ex["end"] for ex in batch])
+        labels = torch.stack([ex["labels"] for ex in batch])
 
         return {
-            "docid": docids,
-            "gold_mentions": gold_mentions,
+            # "docid": docids,
             "input_ids": input_ids,
             "attention_mask": attention_mask,
-            "context_mask": context_mask,
-            "start_positions": start,
-            "end_positions": end,
-        }
-
-    @staticmethod
-    def collate_inference_fn(batch):
-        """
-        Groups multiple examples into one batch with padding and tensorization.
-        The collate function is called by PyTorch DataLoader
-        """
-
-        docids = [ex["docid"] for ex in batch]
-        gold_mentions = [ex["gold_mentions"] for ex in batch]
-        input_ids = torch.stack([ex["input_ids"] for ex in batch])
-        attention_mask = torch.stack([ex["attention_mask"] for ex in batch])
-        context_mask = torch.stack([ex["context_mask"] for ex in batch])
-
-        return {
-            "docid": docids,
-            "input_ids": input_ids,
-            "attention_mask": attention_mask,
-            "context_mask": context_mask,
-            "gold_mentions": gold_mentions,
+            "labels": labels,
         }

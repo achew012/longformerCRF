@@ -9,3 +9,4 @@ jsonlines
 scipy
 clearml
 tqdm
+scikit-learn
