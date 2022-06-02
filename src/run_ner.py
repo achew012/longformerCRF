@@ -3,7 +3,7 @@ from transformers import AutoTokenizer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 import pytorch_lightning as pl
-from data.data import NERDataset
+from data.data import NERDataset, WNUTDataset
 from model.model import NERLongformer
 from torch.utils.data import DataLoader
 import os
@@ -12,6 +12,7 @@ from typing import Dict, Any, List, Tuple
 from omegaconf import OmegaConf
 import hydra
 from clearml import Task, StorageManager, Dataset as ClearML_Dataset
+from datasets import load_dataset
 
 Task.force_requirements_env_freeze(
     force=True, requirements_file="requirements.txt")
@@ -54,9 +55,26 @@ def get_dataloader(split_name, cfg) -> DataLoader:
 
     if cfg.debug:
         dataset_split = dataset_split[:25]
+    
+    if cfg.dataset=="wnut_17":
+        tokenizer = AutoTokenizer.from_pretrained(cfg.model_name, use_fast=True, add_prefix_space=True)
 
-    tokenizer = AutoTokenizer.from_pretrained(cfg.model_name, use_fast=True)
-    dataset = NERDataset(dataset=dataset_split, tokenizer=tokenizer, cfg=cfg)
+        wnut_raw = load_dataset("wnut_17")
+        if split_name =="train":
+            wnut_train = wnut_raw["train"]
+            dataset = WNUTDataset(wnut_train["tokens"], wnut_train["ner_tags"], tokenizer=tokenizer, cfg=cfg)
+
+        elif split_name =="dev":
+            wnut_dev = wnut_raw["validation"]
+            dataset = WNUTDataset(wnut_dev["tokens"], wnut_dev["ner_tags"], tokenizer=tokenizer, cfg=cfg)
+
+        elif split_name =="test":
+            wnut_test = wnut_raw["test"]
+            dataset = WNUTDataset(wnut_test["tokens"], wnut_test["ner_tags"], tokenizer=tokenizer, cfg=cfg)
+
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(cfg.model_name, use_fast=True)
+        dataset = NERDataset(dataset=dataset_split, tokenizer=tokenizer, cfg=cfg)
 
     if split_name in ["dev", "test"]:
         return DataLoader(

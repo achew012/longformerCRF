@@ -205,6 +205,9 @@ class NERLongformer(pl.LightningModule):
 
     def _evaluation_step(self, split, batch, batch_nb):
         """Validaton or Testing - predict output, compare it with gold, compute rouge1, 2, L, and log result"""
+        
+        ipdb.set_trace()
+
         outputs = self.forward(**batch)
         return {'loss': outputs[0], "logits": outputs[1]}
 
@@ -233,7 +236,7 @@ class NERLongformer(pl.LightningModule):
         val_labels = torch.cat(val_labels, 0)
 
         print(classification_report(val_labels.view(-1).cpu().detach(),
-              val_logits.view(-1).cpu().detach()))
+              val_logits.view(-1).cpu().detach(), target_names=[key for key in self.cfg.role_map.keys()]))
         self.log("val_loss", val_loss)
 
     def test_step(self, batch, batch_nb):

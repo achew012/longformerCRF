@@ -24,23 +24,40 @@ gpu: 1
 debug: False
 train: True
 test: True
-remote: True
+remote: False
 early_stopping: True
 checkpointing: True
 trained_model_path: 
 queue: compute
+dataset: wnut_17
 role_map: {
-    'O': 0,
-    'B-Location': 1,
-    'I-Location': 2,
-    'B-PerpInd': 3,
-    'I-PerpInd': 4,
-    'B-PerpOrg': 5,
-    'I-PerpOrg': 6,
-    'B-PhysicalTarget': 7,
-    'I-PhysicalTarget': 8,
-    'B-HumTarget': 9,
-    'I-HumTarget': 10,
-    'B-Weapon': 11,
-    'I-Weapon': 12,
-}
+            'O': 0,
+            'B-corporation': 1,
+            'I-corporation': 2,
+            'B-creative-work': 3,
+            'I-creative-work': 4,
+            'B-group': 5,
+            'I-group': 6,
+            'B-location': 7,
+            'I-location': 8,
+            'B-person': 9,
+            'I-person': 10,
+            'B-product': 11,
+            'I-product': 12,
+        }
+
+# role_map: {
+#     'O': 0,
+#     'B-Location': 1,
+#     'I-Location': 2,
+#     'B-PerpInd': 3,
+#     'I-PerpInd': 4,
+#     'B-PerpOrg': 5,
+#     'I-PerpOrg': 6,
+#     'B-PhysicalTarget': 7,
+#     'I-PhysicalTarget': 8,
+#     'B-HumTarget': 9,
+#     'I-HumTarget': 10,
+#     'B-Weapon': 11,
+#     'I-Weapon': 12,
+# }

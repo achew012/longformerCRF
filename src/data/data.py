@@ -5,6 +5,36 @@ from .preprocessing import process_train_data, process_inference_data
 import ipdb
 
 
+class WNUTDataset(torch.utils.data.Dataset):
+    def __init__(self, train_texts: List[List[str]], tag_ids: List[List[int]], tokenizer: Any, cfg: Any):
+        self.idx2tag = {
+            0: 'O',
+            1: 'B-corporation',
+            2: 'I-corporation',
+            3: 'B-creative-work',
+            4: 'I-creative-work',
+            5: 'B-group',
+            6: 'I-group',
+            7: 'B-location',
+            8: 'I-location',
+            9: 'B-person',
+            10: 'I-person',
+            11: 'B-product',
+            12: 'I-product',
+        }
+        self.encodings = tokenizer(train_texts, is_split_into_words=True, return_offsets_mapping=True, padding="max_length", truncation=True,
+                                      max_length=cfg.max_input_len, return_tensors="pt")
+        self.tag_ids = tag_ids
+
+    def __getitem__(self, idx):
+        item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
+        item['labels'] = torch.tensor(self.tag_ids[idx])
+        return item
+
+    def __len__(self):
+        return len(self.tag_ids)
+
+
 class NERDataset(Dataset):
     # doc_list
     # extracted_list as template
